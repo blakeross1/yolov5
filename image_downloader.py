@@ -1,0 +1,2 @@
+from bing_image_downloader import downloader
+downloader.download("electrical controls panel powerflex 525", limit=50,  output_dir='downloads/images/Powerflex-525', adult_filter_off=True, force_replace=False, timeout=60, verbose=True)

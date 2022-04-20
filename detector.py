@@ -4,14 +4,17 @@ import cv2
 from IPython.display import Image  # for displaying images
 from roboflow import Roboflow
 from time import time
+import pafy
 
 class PowerflexDetect:
 
-    def __init__(self, capture_index, model_name):
+    def __init__(self, capture_index, model_name, url, out_file):
 
+        self._URL = url
         self.capture_index = capture_index
         self.model = self.load_model(model_name)
         self.classes = self.model.names
+        self.out_file = out_file
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print("Using Device: ", self.device)
 
@@ -19,7 +22,12 @@ class PowerflexDetect:
 
     def get_video_capture(self):
         return cv2.VideoCapture(self.capture_index)
-    
+
+    def get_video_from_url(self):
+        play = pafy.new(self._URL).streams[-1]
+        assert play is not None
+        return cv2.VideoCapture(play.url)
+
 
     def load_model(self, model_name):
         
@@ -57,31 +65,57 @@ class PowerflexDetect:
 
     
     def __call__(self):
-        cap = self.get_video_capture()
-        assert cap.isOpened()
+
+        player = self.get_video_from_url()
+        assert player.isOpened()
+        x_shape = int(player.get(cv2.CAP_PROP_FRAME_WIDTH))
+        y_shape = int(player.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        four_cc = cv2.VideoWriter_fourcc(*"MJPG")
+        out = cv2.VideoWriter(self.out_file, four_cc, 20, (x_shape, y_shape))
+        frame_num = 0
 
         while True:
-
-            ret, frame = cap.read()
-            assert ret
-
-            frame = cv2.resize(frame, (416,416))
-
             start_time = time()
+            ret, frame = player.read()
+            if not ret:
+                break
+            print(frame_num)
             results = self.score_frame(frame)
             frame = self.plot_boxes(results, frame)
-
             end_time = time()
             fps = 1/np.round(end_time - start_time, 2)
+            out.write(frame)
+            frame_num += 1
 
-            cv2.putText(frame, f'FPS: {int(fps)}', (20,70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,255,0), 2)
 
-            cv2.imshow('YOLOv5 Detection', frame)
 
-            if cv2.waitKey(5) & 0xFF == 27:
-                break
 
-        cap.release()
 
-detector = PowerflexDetect(capture_index=0, model_name='runs/train/exp/weights/best.pt')
+        # cap = self.get_video_capture()
+        # assert cap.isOpened()
+
+        # while True:
+
+        #     ret, frame = cap.read()
+        #     assert ret
+
+        #     frame = cv2.resize(frame, (416,416))
+
+        #     start_time = time()
+        #     results = self.score_frame(frame)
+        #     frame = self.plot_boxes(results, frame)
+
+        #     end_time = time()
+        #     fps = 1/np.round(end_time - start_time, 2)
+
+        #     cv2.putText(frame, f'FPS: {int(fps)}', (20,70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,255,0), 2)
+
+        #     cv2.imshow('YOLOv5 Detection', frame)
+
+        #     if cv2.waitKey(5) & 0xFF == 27:
+        #         break
+
+        # cap.release()
+
+detector = PowerflexDetect(capture_index=0, model_name='runs/train/exp/weights/best.pt', url="https://www.youtube.com/watch?v=3XR8CugJ7J8", out_file="video1.avi")
 detector()
