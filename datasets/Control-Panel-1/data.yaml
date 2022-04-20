@@ -1,0 +1,5 @@
+names:
+- Powerflex-755
+nc: 1
+train: /content/datasets/Control-Panel-1/train/images
+val: /content/datasets/Control-Panel-1/valid/images
