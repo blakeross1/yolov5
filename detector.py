@@ -24,7 +24,7 @@ class PowerflexDetect:
     def load_model(self, model_name):
         
         if model_name:
-            model = torch.hub.load('blakeross1/Control-Panel-Detector', 'custom', path=model_name, force_reload=True)
+            model = torch.hub.load(r'C:\Users\B0WK73\Documents\Repo\Control-Panel-Detector', 'custom', path=model_name, source='local', force_reload=True)
         else:
             model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)
         return model
@@ -83,5 +83,5 @@ class PowerflexDetect:
 
         cap.release()
 
-detector = PowerflexDetect(capture_index=0, model_name=r'C:\Users\B0WK73\Documents\Repo\Control-Panel2\yolov5\runs\train\exp\weights\best.pt')
+detector = PowerflexDetect(capture_index=0, model_name='runs/train/exp/weights/best.pt')
 detector()
